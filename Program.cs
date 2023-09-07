@@ -1,12 +1,28 @@
 using MassTransit;
+using MassTransit.Clients;
 using MassTransit.Mediator;
+using Test;
 
 var builder = WebApplication.CreateBuilder(args);
+
 
 builder.Services.AddMediator(cfg =>
 {
     cfg.AddConsumer<Test.DummyRequestConsumer>();
 });
+
+
+/*
+builder.Services.AddMassTransit(x =>
+{
+    x.AddConsumer<Test.DummyRequestConsumer>();
+    
+    x.UsingInMemory((context, cfg) =>
+    {
+        cfg.ConfigureEndpoints(context);
+    });
+});
+*/
 
 var app = builder.Build();
 
@@ -14,16 +30,20 @@ app.UseHttpsRedirection();
 
 TaskScheduler.UnobservedTaskException += (sender, eventArgs) =>
 {
-    System.Console.WriteLine("Unobserved task exception!");
+    System.Console.WriteLine("Unobserved task exception!:\n" + eventArgs.Exception);
 };
 
-app.MapPost("/error", async (HttpContext ctx, IScopedMediator mediator) =>
+app.MapPost("/error", async (HttpContext ctx, IMediator requestClientFactory) =>
 {
     var guid = Guid.NewGuid().ToString();
     try
     {
-        var response = await mediator
-            .CreateRequestClient<Test.DummyRequest>()
+        var context = requestClientFactory.Context;
+        IClientFactory myFactory = new MyClientFactory(context);
+        
+        var requestClient = myFactory.CreateRequestClient<Test.DummyRequest>();
+        
+        var response = await requestClient
             .GetResponse<Test.DummyResponse>(new Test.DummyRequest("foo"));
         System.Console.WriteLine("success");
     }
@@ -32,7 +52,7 @@ app.MapPost("/error", async (HttpContext ctx, IScopedMediator mediator) =>
         System.Console.WriteLine("error in mass transit consumer");
     }
 
-    await Task.Delay(1000);
+    await Task.Delay(3000);
     GC.Collect(); 
     GC.WaitForPendingFinalizers();            
 
