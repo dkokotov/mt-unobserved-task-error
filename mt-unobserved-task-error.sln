@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "masstransit-error-test", "masstransit-error-test\masstransit-error-test.csproj", "{A3DBC432-1B70-4C20-B9D7-4CF60A694992}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "masstransit-error", "masstransit-error\masstransit-error.csproj", "{83403F57-0BB3-4C39-A8C3-992253782617}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A3DBC432-1B70-4C20-B9D7-4CF60A694992}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A3DBC432-1B70-4C20-B9D7-4CF60A694992}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A3DBC432-1B70-4C20-B9D7-4CF60A694992}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A3DBC432-1B70-4C20-B9D7-4CF60A694992}.Release|Any CPU.Build.0 = Release|Any CPU
+		{83403F57-0BB3-4C39-A8C3-992253782617}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{83403F57-0BB3-4C39-A8C3-992253782617}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{83403F57-0BB3-4C39-A8C3-992253782617}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{83403F57-0BB3-4C39-A8C3-992253782617}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

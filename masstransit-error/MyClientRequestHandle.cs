@@ -1,6 +1,7 @@
 using MassTransit;
 using MassTransit.Clients;
 using MassTransit.Configuration;
+using MassTransit.Internals;
 using MassTransit.Util;
 
 namespace Test;
@@ -48,9 +49,12 @@ public class MyClientRequestHandle<TRequest> :
                 : TaskScheduler.FromCurrentSynchronizationContext());
 
         _message = new TaskCompletionSource<TRequest>();
+        _message.Task.IgnoreUnobservedExceptions();
         _pipeConfigurator = new PipeConfigurator<SendContext<TRequest>>();
         _sendContext = TaskUtil.GetTask<SendContext<TRequest>>();
+        _sendContext.Task.IgnoreUnobservedExceptions();
         _readyToSend = TaskUtil.GetTask<bool>();
+        _readyToSend.Task.IgnoreUnobservedExceptions();
         _cancellationTokenSource = new CancellationTokenSource();
         _responseHandlers = new Dictionary<Type, HandlerConnectHandle>();
         _accept = new List<string>();
@@ -162,7 +166,7 @@ public class MyClientRequestHandle<TRequest> :
         }
         catch (Exception exception)
         {
-            await FailAsync(exception);
+            Fail(exception);
 
             throw new RequestException($"An exception occurred while processing the {typeof(TRequest).Name} request", exception);
         }
@@ -174,7 +178,7 @@ public class MyClientRequestHandle<TRequest> :
         if (_responseHandlers.ContainsKey(typeof(T)))
             throw new RequestException($"Only one handler of type {TypeCache<T>.ShortName} can be registered");
 
-        var configurator = new ResponseHandlerConfigurator<T>(_taskScheduler, handler, _send);
+        var configurator = new MyResponseHandlerConfigurator<T>(_taskScheduler, handler, _send);
 
         configure?.Invoke(configurator);
 
@@ -245,39 +249,9 @@ public class MyClientRequestHandle<TRequest> :
                 _cancellationTokenSource.Cancel();
         }
 
-        HandleFail();
+        Task.Factory.StartNew(HandleFail, CancellationToken.None, TaskCreationOptions.None, _taskScheduler);
     }
-
-    async Task FailAsync(Exception exception)
-    {
-        if (Interlocked.CompareExchange(ref _faultedOrCanceled, 1, 0) != 0)
-            return;
-
-        void HandleFail()
-        {
-            _registration.Dispose();
-
-            DisposeTimer();
-
-            _readyToSend.TrySetException(exception);
-
-            var wasSet = _sendContext.TrySetException(exception);
-
-            _message.TrySetException(exception);
-
-            foreach (var handle in _responseHandlers.Values)
-            {
-                handle.TrySetException(exception);
-                handle.Disconnect();
-            }
-
-            if (wasSet)
-                _cancellationTokenSource.Cancel();
-        }
-
-        await Task.Factory.StartNew(CancelAndDispose, CancellationToken.None, TaskCreationOptions.None, _taskScheduler);
-    }
-
+    
     void CancelAndDispose()
     {
         _registration.Dispose();
